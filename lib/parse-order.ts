@@ -2,8 +2,8 @@ export interface OrderData {
   orderId: number;
   orderName: string;
   email: string;
-  date: string; // DD.MM.YYYY formaat voor starmap
-  time: string; // HH.MM.SS formaat voor starmap
+  date: string; // DD.MM.YYYY
+  time: string; // HH.MM.SS
   location: string;
   message: string;
   color: "Taupe" | "White" | "Black";
@@ -11,36 +11,47 @@ export interface OrderData {
 
 export function parseShopifyOrder(order: any): OrderData | null {
   try {
-    // Vind het poster line item
-    const posterItem = order.line_items?.find(
-      (item: any) =>
-        item.name?.toLowerCase().includes("poster") ||
-        item.name?.toLowerCase().includes("sterrenkaart")
+    const posterItem = order.line_items?.find((item: any) =>
+      (item.name || "").toLowerCase().includes("poster")
     );
 
     if (!posterItem) {
-      console.error("Geen poster gevonden in order");
+      console.error("Geen poster line item gevonden");
       return null;
     }
 
-    // Haal properties op
     const properties = posterItem.properties || [];
-    const getProp = (name: string) =>
-      properties.find((p: any) =>
-        p.name?.toLowerCase().includes(name.toLowerCase())
-      )?.value || "";
+    const getProp = (needle: string) =>
+      properties
+        .find((p: any) =>
+          (p.name || "").toLowerCase().includes(needle.toLowerCase())
+        )
+        ?.value?.trim() || "";
 
-    const dateStr = getProp("datum");
-    const timeStr = getProp("tijd");
-    const location = getProp("locatie");
-    const message = getProp("bericht");
+    // Jouw echte namen:
+    // " Adres & Plaatsnaam"
+    // " Datum & Tijd"
+    // " Boodschap"
+    const locationRaw = getProp("adres & plaatsnaam");
+    const datetimeRaw = getProp("datum & tijd"); // bijv. "08-12-2025 12:00"
+    const message = getProp("boodschap");
+
+    if (!locationRaw || !datetimeRaw) {
+      console.error("Locatie of datum/tijd ontbreekt", {
+        locationRaw,
+        datetimeRaw,
+      });
+      return null;
+    }
+
+    // datetime splitsen
+    const [datePart, timePart] = datetimeRaw.split(" ");
+    // 08-12-2025 -> 08.12.2025
+    const date = datePart.replace(/-/g, ".");
+    // 12:00 -> 12.00.00
+    const time = timePart.replace(/:/g, ".") + ".00";
+
     const color = posterItem.variant_title || "White";
-
-    // Converteer datum van DD-MM-YYYY naar DD.MM.YYYY
-    const date = dateStr.replace(/-/g, ".");
-
-    // Converteer tijd van HH:MM naar HH.MM.SS
-    const time = timeStr.replace(/:/g, ".") + ".00";
 
     return {
       orderId: order.id,
@@ -48,7 +59,7 @@ export function parseShopifyOrder(order: any): OrderData | null {
       email: order.email,
       date,
       time,
-      location,
+      location: locationRaw,
       message,
       color: color as "Taupe" | "White" | "Black",
     };
