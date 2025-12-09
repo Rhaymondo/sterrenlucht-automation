@@ -10,7 +10,7 @@ import os
 font_style = "font-size:10px; letter-spacing:0.7px; font-family:sans-serif; stroke-width:4;"
 font_style2 = "font-size:2px; letter-spacing:0.7px; font-family:sans-serif; stroke-width:2;"
 
-background_color = "rgb(45,59,98)"
+background_color = "rgb(0,0,0)"
 line_color = "rgb(255,255,255)"
 star_color = "rgb(255,255,255)"
 constellation_color = "rgb(255,255,255)"
