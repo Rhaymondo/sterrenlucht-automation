@@ -1,40 +1,52 @@
-export interface Coordinates {
+export interface GeocodingResult {
   latitude: number;
   longitude: number;
-  place: string;
+  place: string; // volledig adres
+  city: string; // alleen stad - NIEUW
 }
 
 export async function geocodeLocation(
-  location: string
-): Promise<Coordinates | null> {
+  address: string
+): Promise<GeocodingResult | null> {
   try {
     const token = process.env.MAPBOX_ACCESS_TOKEN;
-
     if (!token) {
-      console.error("MAPBOX_ACCESS_TOKEN not set");
-      return null;
+      throw new Error("MAPBOX_ACCESS_TOKEN not set");
     }
 
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-      location
-    )}.json?access_token=${token}&limit=1&language=nl`;
+    const encodedAddress = encodeURIComponent(address);
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodedAddress}.json?access_token=${token}&limit=1`;
 
     const response = await fetch(url);
     const data = await response.json();
 
-    const match = data.features?.[0];
-
-    if (!match) {
-      console.error("Geen locatie gevonden voor:", location);
+    if (!data.features || data.features.length === 0) {
       return null;
     }
 
-    const [longitude, latitude] = match.center;
+    const match = data.features[0];
+
+    // Zoek de stad in de context
+    let city = "";
+    if (match.context) {
+      const placeContext = match.context.find((c: any) =>
+        c.id.startsWith("place.")
+      );
+      if (placeContext) {
+        city = placeContext.text;
+      }
+    }
+
+    // Fallback
+    if (!city) {
+      city = match.text;
+    }
 
     return {
-      latitude,
-      longitude,
+      latitude: match.center[1],
+      longitude: match.center[0],
       place: match.place_name,
+      city, // NIEUW
     };
   } catch (error) {
     console.error("Geocoding error:", error);

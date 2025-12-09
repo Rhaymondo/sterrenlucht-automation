@@ -220,7 +220,7 @@ export async function generatePosterPDF(
         </div>
 
         <div class="location">
-          ${options?.location?.match(/([A-Za-z]+)\s*$/)?.[1] || ""}
+          ${options.location}
         </div>
 
         <div class="date">

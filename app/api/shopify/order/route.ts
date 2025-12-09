@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
       svg,
       color: orderData.color,
       message: orderData.message,
-      location: orderData.location,
+      location: coords.city, // was: orderData.location of coords.place
       date: orderData.date,
       time: formatTimeForDisplay(orderData.time),
     });

@@ -28,7 +28,7 @@ export async function GET() {
       svg,
       color: "Taupe",
       message: "Ik hou van jou",
-      location: "Heemraadserf 2, 3991 KA Houten",
+      location: "Houten",
       date: "08.12.2025",
       time: "12:00",
     });
