@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@mapbox/mapbox-sdk": "^0.16.2",
-    "@sparticuz/chromium": "^143.0.0",
+    "@sparticuz/chromium-min": "^143.0.0",
     "@vercel/blob": "^2.0.0",
     "execa": "^9.6.1",
     "next": "16.0.8",

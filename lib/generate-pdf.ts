@@ -1,4 +1,4 @@
-import chromium from "@sparticuz/chromium";
+import chromium from "@sparticuz/chromium-min";
 import puppeteer from "puppeteer-core";
 
 export interface PosterOptions {
@@ -192,8 +192,11 @@ export async function generatePosterPDF(
   `;
 
   const browser = await puppeteer.launch({
-    args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox"],
-    executablePath: await chromium.executablePath(),
+    args: chromium.args,
+    executablePath: await chromium.executablePath(
+      // Vercel hosts the Chromium binary voor chromium-min
+      "https://github.com/Sparticuz/chromium/releases/download/v131.0.0/chromium-v131.0.0-pack.tar"
+    ),
     headless: true,
   });
 
