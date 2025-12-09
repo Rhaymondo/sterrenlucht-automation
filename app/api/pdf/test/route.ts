@@ -2,9 +2,8 @@ import { generatePosterPDF } from "@/lib/generate-pdf";
 import { generateStarmap } from "@/lib/generate-starmap";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
-    // Genereer een test starmap
     const svg = await generateStarmap({
       latitude: 52.16,
       longitude: 4.49,
@@ -14,17 +13,17 @@ export async function GET(request: NextRequest) {
       constellation: true,
     });
 
-    // Genereer de PDF
-    const pdf = await generatePosterPDF({
+    const pdfBuffer = await generatePosterPDF({
       svg,
       color: "Taupe",
       message: "de mooiste ster aan de hemel",
-      location: "Roelof Arendsveen",
+      location: "Roelofarendsveen",
       date: "04.07.2025",
       time: "23:55",
     });
 
-    return new NextResponse(pdf, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
+      status: 200,
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": 'attachment; filename="test-poster.pdf"',
