@@ -33,6 +33,8 @@ export async function POST(request: NextRequest) {
 
     console.log("📦 Order ontvangen:", order.name);
 
+    console.log("🧾 RAW ORDER:", JSON.stringify(order, null, 2));
+
     // 1. Parse de order data
     const orderData = parseShopifyOrder(order);
     if (!orderData) {
