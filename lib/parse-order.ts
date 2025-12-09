@@ -9,6 +9,24 @@ export interface OrderData {
   color: "Taupe" | "White" | "Black";
 }
 
+function parseColor(variantTitle: string): "Taupe" | "White" | "Black" {
+  const title = variantTitle.toLowerCase();
+
+  if (title.includes("taupe")) {
+    return "Taupe";
+  }
+  if (title.includes("wit")) {
+    return "White";
+  }
+  if (title.includes("zwart")) {
+    return "Black";
+  }
+
+  // Default fallback
+  console.warn("Geen kleur gevonden in variant, gebruik Taupe als default");
+  return "Taupe";
+}
+
 export function parseShopifyOrder(order: any): OrderData | null {
   try {
     const posterItem = order.line_items?.find((item: any) =>
@@ -51,7 +69,9 @@ export function parseShopifyOrder(order: any): OrderData | null {
     // 12:00 -> 12.00.00
     const time = timePart.replace(/:/g, ".") + ".00";
 
-    const color = posterItem.variant_title || "White";
+    // Parse color from variant title
+    const variantTitle = posterItem.variant_title || "";
+    const color = parseColor(variantTitle);
 
     return {
       orderId: order.id,
@@ -61,7 +81,7 @@ export function parseShopifyOrder(order: any): OrderData | null {
       time,
       location: locationRaw,
       message,
-      color: color as "Taupe" | "White" | "Black",
+      color,
     };
   } catch (error) {
     console.error("Error parsing order:", error);

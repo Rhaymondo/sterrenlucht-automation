@@ -1,11 +1,13 @@
 import { formatCoordinates, formatTimeForDisplay } from "@/lib/format-date";
 import { generatePosterPDF } from "@/lib/generate-pdf";
-// import { generateStarmap } from "@/lib/generate-starmap"; // niet meer nodig
 import { geocodeLocation } from "@/lib/geocoding";
 import { parseShopifyOrder } from "@/lib/parse-order";
 import { put } from "@vercel/blob";
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 function verifyShopifyWebhook(
   body: string,
@@ -116,6 +118,46 @@ export async function POST(request: NextRequest) {
     });
 
     console.log("📦 PDF opgeslagen in Blob:", blob.url);
+
+    // 6. Stuur notificatie email
+    try {
+      await resend.emails.send({
+        from:
+          process.env.RESEND_FROM_EMAIL || "Sterrenlucht <noreply@resend.dev>",
+        to: process.env.NOTIFICATION_EMAIL!,
+        subject: `✨ Poster klaar: ${orderData.orderName}`,
+        html: `
+          <h2>Nieuwe poster gegenereerd</h2>
+          <p><strong>Order:</strong> ${orderData.orderName} (#${
+          orderData.orderId
+        })</p>
+          <p><strong>Klant:</strong> ${orderData.email}</p>
+          <p><strong>Locatie:</strong> ${orderData.location}</p>
+          <p><strong>Coördinaten:</strong> ${formatCoordinates(
+            coords.latitude,
+            coords.longitude
+          )}</p>
+          <p><strong>Datum:</strong> ${orderData.date}</p>
+          <p><strong>Tijd:</strong> ${formatTimeForDisplay(orderData.time)}</p>
+          <p><strong>Boodschap:</strong> ${orderData.message}</p>
+          <p><strong>Kleur:</strong> ${orderData.color}</p>
+          <p><strong>PDF grootte:</strong> ${(pdf.length / 1024).toFixed(
+            2
+          )} KB</p>
+          <br>
+          <a href="${
+            blob.url
+          }" style="background: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-family: sans-serif;">
+            Download PDF
+          </a>
+        `,
+      });
+      console.log("📧 Email verzonden");
+    } catch (emailError) {
+      console.error("⚠️ Email verzenden mislukt:", emailError);
+      // Niet fatal - order is wel verwerkt
+    }
+
     console.log("🎉 Order succesvol verwerkt!");
 
     return NextResponse.json({
