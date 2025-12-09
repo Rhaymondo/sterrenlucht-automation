@@ -4,25 +4,21 @@
   "email": "test@example.com",
   "line_items": [
     {
-      "name": "Sterrenkaart Poster",
+      "name": "Poster - Onze eerste kus",
       "variant_title": "Taupe",
       "quantity": 1,
       "properties": [
         {
-          "name": "Datum",
-          "value": "01-01-2000"
+          "name": " Adres & Plaatsnaam",
+          "value": "Heemraadserf 2 3991KA Houten"
         },
         {
-          "name": "Tijd",
-          "value": "12:00"
+          "name": " Datum & Tijd",
+          "value": "08-12-2025 12:00"
         },
         {
-          "name": "Locatie",
-          "value": "Amsterdam, Nederland"
-        },
-        {
-          "name": "Bericht",
-          "value": "Een speciale dag"
+          "name": " Boodschap",
+          "value": "Ik hou van je"
         }
       ]
     }

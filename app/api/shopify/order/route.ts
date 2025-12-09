@@ -3,6 +3,7 @@ import { generatePosterPDF } from "@/lib/generate-pdf";
 import { generateStarmap } from "@/lib/generate-starmap";
 import { geocodeLocation } from "@/lib/geocoding";
 import { parseShopifyOrder } from "@/lib/parse-order";
+import { put } from "@vercel/blob";
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -82,6 +83,15 @@ export async function POST(request: NextRequest) {
     });
     console.log("✅ PDF gegenereerd");
 
+    const fileName = `orders/${orderData.orderId}-${Date.now()}.pdf`;
+
+    const blob = await put(fileName, pdf, {
+      access: "public",
+      contentType: "application/pdf",
+    });
+
+    console.log("📦 PDF opgeslagen in Blob:", blob.url);
+
     // TODO: 5. Upload PDF naar storage (Vercel Blob)
     // TODO: 6. Stuur naar drukker
 
@@ -98,6 +108,7 @@ export async function POST(request: NextRequest) {
       },
       // Voor nu: PDF size als confirmatie
       pdfSize: `${(pdf.length / 1024).toFixed(2)} KB`,
+      pdfUrl: blob.url,
     });
   } catch (error) {
     console.error("❌ Error processing order:", error);
