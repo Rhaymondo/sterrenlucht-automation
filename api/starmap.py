@@ -1,9 +1,9 @@
 from http.server import BaseHTTPRequestHandler
 import json
 import subprocess
-import traceback
 import os
 from os.path import join, dirname, abspath
+import traceback
 
 class handler(BaseHTTPRequestHandler):
     def do_POST(self):
@@ -28,11 +28,13 @@ class handler(BaseHTTPRequestHandler):
             }).encode("utf-8"))
             return
 
-        # project root en starmap repo
+        # paths
         root = dirname(dirname(abspath(__file__)))
         starmap_dir = join(root, "external", "starmap")
         script_path = join(starmap_dir, "starmap.py")
-        output_path = join(starmap_dir, "starmap.svg")
+        
+        # OUTPUT NAAR /tmp (schrijfbaar in Vercel)
+        output_path = "/tmp/starmap.svg"
 
         coord = f"{lat},{lng}"
         utc = f"+{utc_offset}" if utc_offset >= 0 else str(utc_offset)
@@ -49,7 +51,8 @@ class handler(BaseHTTPRequestHandler):
                     "-constellation", str(constellation),
                 ],
                 cwd=starmap_dir,
-                check=False,           # geen exception, we checken zelf
+                env={**os.environ, "STARMAP_OUTPUT": "/tmp/starmap.svg"},
+                check=False,
                 capture_output=True,
                 text=True,
             )
@@ -67,6 +70,7 @@ class handler(BaseHTTPRequestHandler):
                 }).encode("utf-8"))
                 return
 
+            # Lees de SVG uit /tmp
             with open(output_path, "r", encoding="utf-8") as f:
                 svg = f.read()
 
@@ -74,6 +78,7 @@ class handler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "image/svg+xml")
             self.end_headers()
             self.wfile.write(svg.encode("utf-8"))
+            
         except Exception as e:
             self.send_response(500)
             self.send_header("Content-Type", "application/json")
