@@ -10,10 +10,11 @@
   },
   "dependencies": {
     "@mapbox/mapbox-sdk": "^0.16.2",
+    "@sparticuz/chromium": "^143.0.0",
     "@vercel/blob": "^2.0.0",
     "execa": "^9.6.1",
     "next": "16.0.8",
-    "puppeteer": "^24.32.1",
+    "puppeteer-core": "^24.32.1",
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "zod": "^4.1.13"
