@@ -365,7 +365,9 @@ if __name__ == '__main__':
 	half_y = mm_to_px(height/2)
 
 	#Svgfile 
-	image = svgwrite.Drawing(output_file,size=(str(width)+'mm',str(height)+'mm'))
+	output = os.environ.get("STARMAP_OUTPUT", "starmap.svg")
+	image = svgwrite.Drawing(output, size=(str(width)+'mm', str(height)+'mm'))
+
 
 	#Background
 	image.add(image.rect(insert=(0, 0),size=('100%', '100%'), rx=None, ry=None, fill=background_color))
@@ -380,7 +382,6 @@ if __name__ == '__main__':
 	image.add(image.text(str(northern)+" N "+str(eastern)+" E " , insert=("20mm", str(height-17)+'mm'), fill=line_color, style=font_style))
 	image.add(image.text(date +" "+ time+ " UTC " + str(utc), insert=("20mm", str(height-13)+'mm'), fill=line_color, style=font_style))
 
-	output = os.environ.get("STARMAP_OUTPUT", "starmap.svg")
 	image.save(filename=output)
 	print(output_file ," generated")
 
