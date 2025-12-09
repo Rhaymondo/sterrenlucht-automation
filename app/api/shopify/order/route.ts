@@ -2,7 +2,7 @@ import { formatCoordinates, formatTimeForDisplay } from "@/lib/format-date";
 import { generatePosterPDF } from "@/lib/generate-pdf";
 import { geocodeLocation } from "@/lib/geocoding";
 import { parseShopifyOrder } from "@/lib/parse-order";
-import { put } from "@vercel/blob";
+import { list, put } from "@vercel/blob";
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
@@ -45,6 +45,22 @@ export async function POST(request: NextRequest) {
     const order = JSON.parse(body);
 
     console.log("📦 Order ontvangen:", order.name);
+
+    // Check of PDF al bestaat voor deze order (voorkom duplicaten)
+    const existingFiles = await list({
+      prefix: `orders/${order.id}-`,
+      limit: 1,
+    });
+
+    if (existingFiles.blobs.length > 0) {
+      console.log("⏭️  PDF al gegenereerd voor order", order.id);
+      return NextResponse.json({
+        success: true,
+        message: "Order already processed",
+        pdfUrl: existingFiles.blobs[0].url,
+      });
+    }
+
     console.log("🧾 RAW ORDER:", JSON.stringify(order, null, 2));
 
     // 1. Parse de order data
@@ -103,7 +119,7 @@ export async function POST(request: NextRequest) {
       svg,
       color: orderData.color,
       message: orderData.message,
-      location: coords.city, // was: orderData.location of coords.place
+      location: coords.city,
       date: orderData.date,
       time: formatTimeForDisplay(orderData.time),
     });
