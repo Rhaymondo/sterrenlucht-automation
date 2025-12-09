@@ -1,0 +1,9 @@
+[project]
+name = "sterrenlucht-starmap"
+version = "0.1.0"
+description = "Python starmap function for sterrenlucht"
+requires-python = ">=3.11"
+
+dependencies = [
+  "svgwrite==1.4.3",
+]
