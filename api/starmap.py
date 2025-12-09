@@ -1,6 +1,7 @@
 from http.server import BaseHTTPRequestHandler
 import json
 import subprocess
+import traceback
 import os
 from os.path import join, dirname, abspath
 
@@ -37,7 +38,7 @@ class handler(BaseHTTPRequestHandler):
         utc = f"+{utc_offset}" if utc_offset >= 0 else str(utc_offset)
 
         try:
-            subprocess.run(
+            result = subprocess.run(
                 [
                     "python3",
                     script_path,
@@ -48,8 +49,23 @@ class handler(BaseHTTPRequestHandler):
                     "-constellation", str(constellation),
                 ],
                 cwd=starmap_dir,
-                check=True,
+                check=False,           # geen exception, we checken zelf
+                capture_output=True,
+                text=True,
             )
+
+            if result.returncode != 0:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    "success": False,
+                    "error": "starmap.py failed",
+                    "stdout": result.stdout,
+                    "stderr": result.stderr,
+                    "code": result.returncode,
+                }).encode("utf-8"))
+                return
 
             with open(output_path, "r", encoding="utf-8") as f:
                 svg = f.read()
@@ -65,4 +81,5 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({
                 "success": False,
                 "error": str(e),
+                "trace": traceback.format_exc(),
             }).encode("utf-8"))
