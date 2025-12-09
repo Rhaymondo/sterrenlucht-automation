@@ -122,35 +122,36 @@ export async function generatePosterPDF(
         }
         
         .datetime {
-          position: absolute;
-          top: ${bleed + 260}mm;
-          width: 300mm;
-          text-align: center;
-          color: ${textColor};
-          font-size: 18pt;
-          font-weight: 300;
+            position: absolute;
+            top: ${bleed + 260}mm;
+            width: 300mm;
+            text-align: center;
+            color: ${textColor};
+            font-size: 18pt;
+            font-weight: 300;
+            line-height: 1.5;  /* voeg dit toe voor betere spacing */
         }
-        
+
         .message {
-          position: absolute;
-          top: ${bleed + 306}mm;
-          width: 300mm;
-          text-align: center;
-          color: ${textColor};
-          font-size: 30pt;
-          font-weight: 400;
+            position: absolute;
+            top: ${bleed + 285}mm;  /* dichter naar datum/tijd */
+            width: 300mm;
+            text-align: center;
+            color: ${textColor};
+            font-size: 30pt;
+            font-weight: 400;
         }
-        
+
         .location {
-          position: absolute;
-          top: ${bleed + 335}mm;
-          width: 300mm;
-          text-align: center;
-          color: ${textColor};
-          font-size: 18pt;
-          font-weight: 300;
-          letter-spacing: 0.49em;
-          text-transform: uppercase;
+            position: absolute;
+            top: ${bleed + 320}mm;  /* dichter naar message */
+            width: 300mm;
+            text-align: center;
+            color: ${textColor};
+            font-size: 18pt;
+            font-weight: 300;
+            letter-spacing: 0.49em;
+            text-transform: uppercase;
         }
       </style>
     </head>
@@ -175,16 +176,16 @@ export async function generatePosterPDF(
         </div>
         
         <div class="datetime">
-          ${options.date}<br>
-          ${options.time}
+        ${options.date}<br>
+        ${options.time}
         </div>
-        
+
         <div class="message">
-          ${options.message}
+        ${options.message}
         </div>
-        
+
         <div class="location">
-          ${options.location.replace(/\s/g, "").replace(/,/g, "")}
+        ${options.location.replace(/\s/g, "").replace(/,/g, "")}
         </div>
       </div>
     </body>

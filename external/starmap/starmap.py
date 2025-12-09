@@ -378,9 +378,9 @@ if __name__ == '__main__':
 		generate_constellations(northern,eastern,date,time)
 
 	#Text in bottom corner
-	image.add(image.text(info, insert=("20mm", str(height-21)+'mm'), fill=line_color, style=font_style))
-	image.add(image.text(str(northern)+" N "+str(eastern)+" E " , insert=("20mm", str(height-17)+'mm'), fill=line_color, style=font_style))
-	image.add(image.text(date +" "+ time+ " UTC " + str(utc), insert=("20mm", str(height-13)+'mm'), fill=line_color, style=font_style))
+	# image.add(image.text(info, insert=("20mm", str(height-21)+'mm'), fill=line_color, style=font_style))
+	# image.add(image.text(str(northern)+" N "+str(eastern)+" E " , insert=("20mm", str(height-17)+'mm'), fill=line_color, style=font_style))
+	# image.add(image.text(date +" "+ time+ " UTC " + str(utc), insert=("20mm", str(height-13)+'mm'), fill=line_color, style=font_style))
 
 	image.save()
 	print(output_file ," generated")
