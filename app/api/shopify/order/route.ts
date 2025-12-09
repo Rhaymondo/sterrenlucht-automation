@@ -111,8 +111,7 @@ export async function POST(request: NextRequest) {
     // 6. Genereer starmap SVG via Python function op Vercel
     console.log("🌟 Genereer starmap (Python)...");
     const pythonStarmapUrl =
-      process.env.PY_STARMAP_URL ??
-      "https://sterrenlucht-automation.vercel.app/api/starmap";
+      process.env.PY_STARMAP_URL ?? "https://api.sterrenlucht.nl/api/starmap";
 
     const resp = await fetch(pythonStarmapUrl, {
       method: "POST",
