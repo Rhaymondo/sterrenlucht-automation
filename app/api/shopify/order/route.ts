@@ -43,12 +43,14 @@ export async function POST(request: NextRequest) {
     // }
 
     const order = JSON.parse(body);
-
     console.log("📦 Order ontvangen:", order.name);
 
-    // Check of PDF al bestaat voor deze order (voorkom duplicaten)
+    const lockKey = `locks/${order.id}.lock`;
+    const pdfPrefix = `orders/${order.id}-`;
+
+    // 1. Check of er al een PDF bestaat
     const existingFiles = await list({
-      prefix: `orders/${order.id}-`,
+      prefix: pdfPrefix,
       limit: 1,
     });
 
@@ -61,9 +63,29 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // 2. Check of er een lock bestaat (andere invocation is bezig)
+    const existingLock = await list({
+      prefix: lockKey,
+      limit: 1,
+    });
+
+    if (existingLock.blobs.length > 0) {
+      console.log("🔒 Order wordt al verwerkt door andere invocation");
+      return NextResponse.json({
+        success: true,
+        message: "Order is being processed",
+      });
+    }
+
+    // 3. Claim de lock
+    await put(lockKey, JSON.stringify({ timestamp: Date.now() }), {
+      access: "public",
+    });
+
+    console.log("✅ Lock geclaimd voor order", order.id);
     console.log("🧾 RAW ORDER:", JSON.stringify(order, null, 2));
 
-    // 1. Parse de order data
+    // 4. Parse de order data
     const orderData = parseShopifyOrder(order);
     if (!orderData) {
       console.error("❌ Kon order niet parsen");
@@ -74,7 +96,7 @@ export async function POST(request: NextRequest) {
     }
     console.log("✅ Order geparsed");
 
-    // 2. Geocode de locatie
+    // 5. Geocode de locatie
     console.log("🗺️  Geocoding:", orderData.location);
     const coords = await geocodeLocation(orderData.location);
     if (!coords) {
@@ -86,7 +108,7 @@ export async function POST(request: NextRequest) {
     }
     console.log("✅ Coördinaten:", coords.latitude, coords.longitude);
 
-    // 3. Genereer starmap SVG via Python function op Vercel
+    // 6. Genereer starmap SVG via Python function op Vercel
     console.log("🌟 Genereer starmap (Python)...");
     const pythonStarmapUrl =
       process.env.PY_STARMAP_URL ??
@@ -113,7 +135,7 @@ export async function POST(request: NextRequest) {
     const svg = await resp.text();
     console.log("✅ Starmap gegenereerd (Python)");
 
-    // 4. Genereer PDF
+    // 7. Genereer PDF
     console.log("📄 Genereer PDF...");
     const pdf = await generatePosterPDF({
       svg,
@@ -125,7 +147,7 @@ export async function POST(request: NextRequest) {
     });
     console.log("✅ PDF gegenereerd");
 
-    // 5. Upload naar Vercel Blob
+    // 8. Upload naar Vercel Blob
     const fileName = `orders/${orderData.orderId}-${Date.now()}.pdf`;
 
     const blob = await put(fileName, pdf, {
@@ -135,7 +157,7 @@ export async function POST(request: NextRequest) {
 
     console.log("📦 PDF opgeslagen in Blob:", blob.url);
 
-    // 6. Stuur notificatie email
+    // 9. Stuur notificatie email
     try {
       await resend.emails.send({
         from:
