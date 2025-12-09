@@ -9,9 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@mapbox/mapbox-sdk": "^0.16.2",
+    "execa": "^9.6.1",
     "next": "16.0.8",
+    "puppeteer": "^24.32.1",
     "react": "19.2.1",
-    "react-dom": "19.2.1"
+    "react-dom": "19.2.1",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
