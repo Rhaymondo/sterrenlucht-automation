@@ -33,12 +33,12 @@ export async function POST(request: NextRequest) {
     const hmacHeader = request.headers.get("x-shopify-hmac-sha256");
 
     // tijdens dev kun je deze check eventueel uitzetten
-    if (!verifyShopifyWebhook(body, hmacHeader)) {
-      return NextResponse.json(
-        { success: false, error: "Invalid webhook signature" },
-        { status: 401 }
-      );
-    }
+    // if (!verifyShopifyWebhook(body, hmacHeader)) {
+    //   return NextResponse.json(
+    //     { success: false, error: "Invalid webhook signature" },
+    //     { status: 401 }
+    //   );
+    // }
 
     const order = JSON.parse(body);
 
