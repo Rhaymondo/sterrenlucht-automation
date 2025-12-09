@@ -382,6 +382,6 @@ if __name__ == '__main__':
 	image.add(image.text(str(northern)+" N "+str(eastern)+" E " , insert=("20mm", str(height-17)+'mm'), fill=line_color, style=font_style))
 	image.add(image.text(date +" "+ time+ " UTC " + str(utc), insert=("20mm", str(height-13)+'mm'), fill=line_color, style=font_style))
 
-	image.save(filename=output)
+	image.save()
 	print(output_file ," generated")
 
