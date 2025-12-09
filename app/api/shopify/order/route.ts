@@ -1,6 +1,6 @@
 import { formatCoordinates, formatTimeForDisplay } from "@/lib/format-date";
 import { generatePosterPDF } from "@/lib/generate-pdf";
-import { generateStarmap } from "@/lib/generate-starmap";
+// import { generateStarmap } from "@/lib/generate-starmap"; // niet meer nodig
 import { geocodeLocation } from "@/lib/geocoding";
 import { parseShopifyOrder } from "@/lib/parse-order";
 import { put } from "@vercel/blob";
@@ -30,10 +30,19 @@ function verifyShopifyWebhook(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
+    const hmacHeader = request.headers.get("x-shopify-hmac-sha256");
+
+    // tijdens dev kun je deze check eventueel uitzetten
+    // if (!verifyShopifyWebhook(body, hmacHeader)) {
+    //   return NextResponse.json(
+    //     { success: false, error: "Invalid webhook signature" },
+    //     { status: 401 }
+    //   );
+    // }
+
     const order = JSON.parse(body);
 
     console.log("📦 Order ontvangen:", order.name);
-
     console.log("🧾 RAW ORDER:", JSON.stringify(order, null, 2));
 
     // 1. Parse de order data
@@ -59,17 +68,32 @@ export async function POST(request: NextRequest) {
     }
     console.log("✅ Coördinaten:", coords.latitude, coords.longitude);
 
-    // 3. Genereer starmap SVG
-    console.log("🌟 Genereer starmap...");
-    const svg = await generateStarmap({
-      latitude: coords.latitude,
-      longitude: coords.longitude,
-      date: orderData.date,
-      time: orderData.time,
-      utcOffset: 1, // TODO: bepaal dit dynamisch op basis van locatie/datum
-      constellation: true,
+    // 3. Genereer starmap SVG via Python function op Vercel
+    console.log("🌟 Genereer starmap (Python)...");
+    const pythonStarmapUrl =
+      process.env.PY_STARMAP_URL ??
+      "https://sterrenlucht-automation.vercel.app/api/starmap";
+
+    const resp = await fetch(pythonStarmapUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        date: orderData.date,
+        time: orderData.time,
+        utcOffset: 1, // TODO: dynamisch op basis van locatie/datum
+        constellation: true,
+      }),
     });
-    console.log("✅ Starmap gegenereerd");
+
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(`Python starmap function error: ${resp.status} ${text}`);
+    }
+
+    const svg = await resp.text();
+    console.log("✅ Starmap gegenereerd (Python)");
 
     // 4. Genereer PDF
     console.log("📄 Genereer PDF...");
@@ -83,6 +107,7 @@ export async function POST(request: NextRequest) {
     });
     console.log("✅ PDF gegenereerd");
 
+    // 5. Upload naar Vercel Blob
     const fileName = `orders/${orderData.orderId}-${Date.now()}.pdf`;
 
     const blob = await put(fileName, pdf, {
@@ -91,10 +116,6 @@ export async function POST(request: NextRequest) {
     });
 
     console.log("📦 PDF opgeslagen in Blob:", blob.url);
-
-    // TODO: 5. Upload PDF naar storage (Vercel Blob)
-    // TODO: 6. Stuur naar drukker
-
     console.log("🎉 Order succesvol verwerkt!");
 
     return NextResponse.json({
@@ -106,7 +127,6 @@ export async function POST(request: NextRequest) {
         location: coords.place,
         coordinates: formatCoordinates(coords.latitude, coords.longitude),
       },
-      // Voor nu: PDF size als confirmatie
       pdfSize: `${(pdf.length / 1024).toFixed(2)} KB`,
       pdfUrl: blob.url,
     });
