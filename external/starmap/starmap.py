@@ -3,6 +3,7 @@ import svgwrite
 import random 
 import math
 import argparse
+import os
 
 ############ DEFAULT VALUES AND CONSTS ####################################
 
