@@ -8,6 +8,7 @@ export interface PosterOptions {
   location: string;
   date: string;
   time: string;
+  cropMarks?: boolean; // default true; set false for digital delivery
 }
 
 const COLORS = {
@@ -25,19 +26,20 @@ const TEXT_COLORS = {
 export async function generatePosterPDF(
   options: PosterOptions
 ): Promise<Buffer> {
-  const bleed = 3; // mm
+  const withCropMarks = options.cropMarks !== false; // default true
+  const bleed = withCropMarks ? 3 : 0; // mm
   const trimWidth = 300; // mm
   const trimHeight = 400; // mm
 
   // page includes bleed on all sides
-  const pageWidth = trimWidth + bleed * 2; // 306
-  const pageHeight = trimHeight + bleed * 2; // 406
+  const pageWidth = trimWidth + bleed * 2;
+  const pageHeight = trimHeight + bleed * 2;
 
   // extra inner white border for Taupe variant
   const innerBorder = options.color === "Taupe" ? 10 : 0;
 
   // offset from page edge to the content box
-  const offset = bleed + innerBorder; // Taupe: 6mm; others: 3mm
+  const offset = bleed + innerBorder;
 
   const contentWidth = trimWidth - innerBorder * 2; // Taupe: 294; others: 300
   const contentHeight = trimHeight - innerBorder * 2; // Taupe: 394; others: 400
@@ -195,18 +197,16 @@ export async function generatePosterPDF(
     </style>
   </head>
   <body>
-    <!-- crop marks (trim line = bleed mm from page edge) -->
+    ${withCropMarks ? `
     <div class="crop crop-h tl-h"></div>
     <div class="crop crop-v tl-v"></div>
-
     <div class="crop crop-h tr-h"></div>
     <div class="crop crop-v tr-v"></div>
-
     <div class="crop crop-h bl-h"></div>
     <div class="crop crop-v bl-v"></div>
-
     <div class="crop crop-h br-h"></div>
     <div class="crop crop-v br-v"></div>
+    ` : ""}
 
     <!-- main content -->
     <div class="content">

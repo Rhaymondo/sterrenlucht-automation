@@ -128,10 +128,11 @@ export async function POST(request: NextRequest) {
     const pdf = await generatePosterPDF({
       svg,
       color,
-      message:  payload.message ?? "",
-      location: city,
+      message:    payload.message ?? "",
+      location:   city,
       date,
-      time:     formatTimeForDisplay(time),
+      time:       formatTimeForDisplay(time),
+      cropMarks:  payload.format !== "digital",
     });
     console.log("✅ PDF gegenereerd");
 
