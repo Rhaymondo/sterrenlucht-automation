@@ -37,7 +37,7 @@ export function digitalDeliveryHtml(params: DigitalDeliveryParams): string {
             <td style="background:#ffffff;border:1px solid #e5e0d8;border-radius:12px;padding:40px;">
 
               <p style="margin:0 0 6px;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#7c7974;">Je poster is klaar</p>
-              <h1 style="margin:0 0 8px;font-size:20px;font-weight:600;color:#1a1714;letter-spacing:-.01em;">Hoi ${firstName}, hier is je poster!</h1>
+              <h1 style="margin:0 0 8px;font-size:20px;font-weight:600;color:#1a1714;letter-spacing:-.01em;">Je poster is klaar!</h1>
               <p style="margin:0 0 32px;font-size:13px;color:#7c7974;line-height:1.6;">
                 Je digitale sterrenkaart staat klaar. Klik op de knop hieronder om je poster te downloaden.
               </p>
