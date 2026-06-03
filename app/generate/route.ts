@@ -1,5 +1,6 @@
 import { formatCoordinates, formatTimeForDisplay } from "@/lib/format-date";
 import { generatePosterPDF } from "@/lib/generate-pdf";
+import { digitalDeliveryHtml } from "@/lib/email/digital-delivery";
 import { list, put } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
@@ -66,12 +67,6 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("📦 Stripe payload ontvangen:", payment_intent_id);
-
-    // Skip for digital-only orders — no physical poster to generate
-    if (payload.format === "digital") {
-      console.log("📧 Digitale bestelling — geen PDF te genereren");
-      return NextResponse.json({ success: true, message: "Digital order, no PDF needed" });
-    }
 
     const lockKey   = `locks/${payment_intent_id}.lock`;
     const pdfPrefix = `orders/${payment_intent_id}-`;
@@ -145,36 +140,56 @@ export async function POST(request: NextRequest) {
     const blob = await put(fileName, pdf, { access: "public", contentType: "application/pdf" });
     console.log("📦 PDF opgeslagen:", blob.url);
 
-    // 7. Notify admin
+    // 7. Send emails
+    const isDigital = payload.format === "digital";
+
     try {
-      await resend.emails.send({
-        from:    process.env.RESEND_FROM_EMAIL || "Sterrenlucht <noreply@resend.dev>",
-        to:      process.env.NOTIFICATION_EMAIL!,
-        subject: `✨ Poster klaar: ${payment_intent_id.slice(-8).toUpperCase()}`,
-        html: `
-          <h2>Nieuwe poster gegenereerd</h2>
-          <p><strong>Order:</strong> ${payment_intent_id}</p>
-          <p><strong>Klant:</strong> ${payload.customer_email ?? "–"}</p>
-          <p><strong>Locatie:</strong> ${payload.location_label ?? city}</p>
-          <p><strong>Coördinaten:</strong> ${formatCoordinates(payload.location_lat, payload.location_lng)}</p>
-          <p><strong>Datum:</strong> ${date}</p>
-          <p><strong>Tijd:</strong> ${formatTimeForDisplay(time)}</p>
-          <p><strong>Boodschap:</strong> ${payload.message ?? "–"}</p>
-          <p><strong>Kleur:</strong> ${color}</p>
-          ${payload.shipping_address ? `
-          <p><strong>Bezorgadres:</strong><br>
-            ${payload.shipping_address.name ?? ""}<br>
-            ${payload.shipping_address.line1 ?? ""}${payload.shipping_address.line2 ? ` ${payload.shipping_address.line2}` : ""}<br>
-            ${payload.shipping_address.postal_code ?? ""} ${payload.shipping_address.city ?? ""}
-          </p>` : ""}
-          <p><strong>PDF grootte:</strong> ${(pdf.length / 1024).toFixed(2)} KB</p>
-          <br>
-          <a href="${blob.url}" style="background:#1a1714;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;font-family:sans-serif;">
-            Download PDF
-          </a>
-        `,
-      });
-      console.log("📧 Admin email verzonden");
+      if (isDigital && payload.customer_email) {
+        // Send PDF directly to customer
+        await resend.emails.send({
+          from:    process.env.RESEND_FROM_EMAIL || "Sterrenlucht <noreply@resend.dev>",
+          to:      payload.customer_email,
+          subject: "Je digitale poster is klaar! ✨",
+          html:    digitalDeliveryHtml({
+            customerName:  payload.shipping_address?.name ?? null,
+            pdfUrl:        blob.url,
+            locationLabel: payload.location_label ?? city,
+            date,
+            time:          formatTimeForDisplay(time),
+          }),
+        });
+        console.log("📧 Klant email verzonden");
+      } else {
+        // Notify admin for printed orders
+        await resend.emails.send({
+          from:    process.env.RESEND_FROM_EMAIL || "Sterrenlucht <noreply@resend.dev>",
+          to:      process.env.NOTIFICATION_EMAIL!,
+          subject: `✨ Poster klaar: ${payment_intent_id.slice(-8).toUpperCase()}`,
+          html: `
+            <h2>Nieuwe poster gegenereerd</h2>
+            <p><strong>Order:</strong> ${payment_intent_id}</p>
+            <p><strong>Klant:</strong> ${payload.customer_email ?? "–"}</p>
+            <p><strong>Locatie:</strong> ${payload.location_label ?? city}</p>
+            <p><strong>Coördinaten:</strong> ${formatCoordinates(payload.location_lat, payload.location_lng)}</p>
+            <p><strong>Datum:</strong> ${date}</p>
+            <p><strong>Tijd:</strong> ${formatTimeForDisplay(time)}</p>
+            <p><strong>Boodschap:</strong> ${payload.message ?? "–"}</p>
+            <p><strong>Kleur:</strong> ${color}</p>
+            ${payload.shipping_address ? `
+            <p><strong>Bezorgadres:</strong><br>
+              ${payload.shipping_address.name ?? ""}<br>
+              ${payload.shipping_address.line1 ?? ""}${payload.shipping_address.line2 ? ` ${payload.shipping_address.line2}` : ""}<br>
+              ${payload.shipping_address.postal_code ?? ""} ${payload.shipping_address.city ?? ""}
+            </p>` : ""}
+            <p><strong>PDF grootte:</strong> ${(pdf.length / 1024).toFixed(2)} KB</p>
+            <br>
+            <a href="${blob.url}" style="background:#1a1714;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;font-family:sans-serif;">
+              Download PDF
+            </a>
+          `,
+        });
+        console.log("📧 Admin email verzonden");
+      }
     } catch (emailError) {
       console.error("⚠️ Email verzenden mislukt:", emailError);
     }
