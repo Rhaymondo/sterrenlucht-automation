@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     console.log("✅ Lock geclaimd");
 
     // 3. Validate required fields
-    if (!payload.location_lat || !payload.location_lng || !payload.date || !payload.time) {
+    if (payload.location_lat == null || payload.location_lng == null || !payload.date || !payload.time) {
       return NextResponse.json({ success: false, error: "Locatie of datum/tijd ontbreekt" }, { status: 400 });
     }
 
