@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
       if (isDigital && payload.customer_email) {
         // Send PDF directly to customer
         await resend.emails.send({
-          from:    process.env.RESEND_FROM_EMAIL || "Sterrenlucht <noreply@resend.dev>",
+          from:    "Sterrenlucht <noreply@sterrenlucht.nl>",
           to:      payload.customer_email,
           subject: "Je digitale poster is klaar! ✨",
           html:    digitalDeliveryHtml({
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
       } else {
         // Notify admin for printed orders
         await resend.emails.send({
-          from:    process.env.RESEND_FROM_EMAIL || "Sterrenlucht <noreply@resend.dev>",
+          from:    "Sterrenlucht <noreply@sterrenlucht.nl>",
           to:      process.env.NOTIFICATION_EMAIL!,
           subject: `✨ Poster klaar: ${payment_intent_id.slice(-8).toUpperCase()}`,
           html: `
