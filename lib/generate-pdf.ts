@@ -12,7 +12,7 @@ export interface PosterOptions {
 }
 
 const COLORS = {
-  Taupe: "#D4C5B9",
+  Taupe: "#DBD6CC",
   White: "#FFFFFF",
   Black: "#000000",
 };
